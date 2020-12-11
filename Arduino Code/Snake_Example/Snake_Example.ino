@@ -1,5 +1,5 @@
 #include "LedControl.h" // LedControl library is used for controlling a LED matrix. Find it using Library Manager or download zip here: https://github.com/wayoda/LedControl
-
+#include "pitches.h"
 
 // --------------------------------------------------------------- //
 // ------------------------- user config ------------------------- //
@@ -13,10 +13,18 @@ struct Pin {
   static const short CLK = 6;   // clock for LED matrix
   static const short CS  = 5;  // chip-select for LED matrix
   static const short DIN = 4; // data-in for LED matrix
+
+  static const short LEDR = 7;
+  static const short LEDG = 8;
+
+  static const short BUZZ = 3;
 };
 
 // LED matrix brightness: between 0(darkest) and 15(brightest)
 const short intensity = 8;
+
+//Threshhold for how many points you need for green LED to light up at end
+const short ScoreThresh = 10;
 
 // lower = faster message scrolling
 const short messageSpeed = 5;
@@ -30,10 +38,19 @@ void setup() {
   initialize();         // initialize pins & LED matrix
   calibrateJoystick(); // calibrate the joystick home (do not touch it)
   showSnakeMessage(); // scrolls the 'snake' message around the matrix
+
+  //Sets pins 7 and 8 for LEDs to output, so can set high or low and turn on/off
+  pinMode(Pin::LEDR, OUTPUT);
+  pinMode(Pin::LEDG, OUTPUT);
+
+  //Sets LEDs to LOW, or off
+  digitalWrite(Pin::LEDR, LOW);
+  digitalWrite(Pin::LEDR, LOW);
 }
 
 
 void loop() {
+  
   generateFood();    // if there is no food, generate one
   scanJoystick();    // watches joystick movements & blinks with food
   calculateSnake();  // calculates snake parameters
@@ -233,7 +250,23 @@ void handleGameStates() {
   if (gameOver || win) {
     unrollSnake();
 
+    //Flashes red led if score below ScoreThresh, otherwise flash greens
+    if(snakeLength - initialSnakeLength < ScoreThresh){
+      digitalWrite(Pin::LEDR, HIGH);
+    }
+    else{
+      digitalWrite(Pin::LEDG, HIGH);
+    }
+    
     showScoreMessage(snakeLength - initialSnakeLength);
+
+   //Plays losing tune of score below ScoreThresh, otherwise plays winning tune
+   if(snakeLength - initialSnakeLength < ScoreThresh){
+      loseTune();
+    }
+    else{
+      winTune();
+    }
 
     if (gameOver) showGameOverMessage();
     else if (win) showWinMessage();
@@ -536,6 +569,9 @@ void showGameOverMessage() {
         return; // return the lambda function
       }
     }
+
+    digitalWrite(Pin::LEDR, LOW);
+    digitalWrite(Pin::LEDR, LOW);
   }();
 
   matrix.clearDisplay(0);
@@ -612,4 +648,20 @@ void showScoreMessage(int score) {
 // standard map function, but with floats
 float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+void winTune(){
+  tone(Pin::BUZZ, NOTE_A7, 250);
+  delay(500);
+  tone(Pin::BUZZ, NOTE_A7, 250);
+  delay(500);
+  tone(Pin::BUZZ, NOTE_A7, 500);
+  delay(1000);
+}
+
+void loseTune(){
+  tone(Pin::BUZZ, NOTE_D3, 500);
+  delay(1000);
+  tone(Pin::BUZZ, NOTE_C2, 1000);
+  delay(1500);
 }
