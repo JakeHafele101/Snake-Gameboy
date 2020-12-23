@@ -5,6 +5,8 @@
 // ------------------------- user config ------------------------- //
 // --------------------------------------------------------------- //
 
+//also, added sound effects when food is eaten by the snake and a different sound effect when the snake reaches a score that is a factor of ten
+
 // there are defined all the pins
 struct Pin {
   static const short joystickX = A0;   // joystick X axis pin
